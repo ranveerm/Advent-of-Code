@@ -157,3 +157,99 @@ let finalScorePart2 = rockPaperScissorsRoundsPart2
     .map { $0.score() }
     .reduce(0, +)
 ```
+
+### Day 3
+```swift
+// MARK: Helpers
+extension String {
+    var uniqueCharacters: Set<Character> { Set(Array(self)) }
+}
+
+extension Character {
+    var rucksackItemPriority: Int? {
+        let asciiOffset = self.isUppercase ? 38 : 96
+        guard let asciiValue = asciiValue else { return nil }
+        return Int(asciiValue) - asciiOffset
+    }
+}
+
+/// Note: The below chuncking logic should be geenralised across `Element`, as opposed to being specific to `String`
+extension Array<String>.SubSequence {
+    func chunked(_ chunkSize: Int) -> [[Element]] {
+        stride(from: 0, to: count, by: chunkSize).map {
+            Array(self[$0..<($0 + chunkSize)])
+        }
+    }
+}
+
+// MARK: Models
+struct RuckSack {
+    let compartment1: String
+    let compartment2: String
+    
+    init?(_ items: String) {
+        let compartmentSize = items.count / 2
+        
+        let startIndex = items.startIndex
+        let middleIndex = items.index(startIndex, offsetBy: compartmentSize)
+        
+        let compartment1 = items[startIndex..<middleIndex]
+        let compartment2 = items[middleIndex..<items.endIndex]
+        guard compartment1.count == compartment2.count else { return nil }
+        
+        self.compartment1 = String(compartment1)
+        self.compartment2 = String(compartment2)
+    }
+    
+    func itemInBothCompartments() -> Character? {
+        let matchedItems = compartment1.uniqueCharacters.intersection(compartment2)
+        
+        guard matchedItems.count == 1,
+              let matchedItem = matchedItems.first else { return nil }
+        
+        return matchedItem
+    }
+}
+
+struct ElfGroup {
+    static let groupSize = 3
+    let ruckSacks: [RuckSack]
+    let group: Character
+    
+    init?(_ ruckSacksRaw: [String]) {
+        self.ruckSacks = ruckSacksRaw.compactMap(RuckSack.init)
+
+        guard ruckSacks.count == Self.groupSize else { return nil }
+        
+        let uniqueItemsWithinRuckSackCollection = ruckSacksRaw
+            .map { $0.uniqueCharacters }
+
+        let itemsAcrossAllruckSacks = uniqueItemsWithinRuckSackCollection
+            .dropFirst()
+            .reduce(uniqueItemsWithinRuckSackCollection[0]) { $0.intersection($1) }
+        
+        guard itemsAcrossAllruckSacks.count == 1,
+              let group = itemsAcrossAllruckSacks.first else { return nil }
+        
+        self.group = group
+    }
+}
+```
+
+Part- 1
+```swift
+let priorityAggregated = input
+    .compactMap(RuckSack.init)
+    .compactMap { $0.itemInBothCompartments() }
+    .compactMap { $0.rucksackItemPriority }
+    .reduce(0, +)
+```
+
+Part- 2
+```swift
+let groupPriorityAggregated = input
+    .chunked(ElfGroup.groupSize)
+    .compactMap(ElfGroup.init)
+    .compactMap { $0.group.rucksackItemPriority }
+    .reduce(0, +)
+```
