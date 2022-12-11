@@ -23,7 +23,7 @@ extension API {
 
 // MARK: Nested Types
 extension API {
-    enum Error: Swift.Error {
+    public enum Error: Swift.Error {
         case unableToSetSessionCookie
         case unableToConstructURL
     }
