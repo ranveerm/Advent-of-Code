@@ -2,16 +2,26 @@
 Responses to [Advent of Code](https://adventofcode.com/2022/about) exercise by Eric Wastl. All solutions are written in [Swift](https://www.swift.org/about/) and packaged within [Swift Playgrounds](https://www.apple.com/au/swift/playgrounds/), allowing you to download it and see it in action.
 
 # 2022
+
+- [Day 1](#Day 1)
+- [Day 2](#Day 2)
+- [Day 3](#Day 3)
+- [Day 4](#Day 4)
+---
+
 ### Day 1
+
 Input is processed to type `[[Int]]`.
 
-Part- 1
+**Part- 1**
+
 ```swift
 let caloriesPerElf = input.map { $0.reduce(0, +) }
 guard let highestCalorieCount = caloriesPerElf.max() else { fatalError("Verify algorithm") }
 ```
 
-Part- 2
+**Part- 2**
+
 ```swift
 let caloriesPerElfSorted = caloriesPerElf.sorted(by: >)
 let top3CalorieCount = caloriesPerElfSorted.prefix(3)
@@ -21,7 +31,8 @@ let top3CalorieCountAgg = top3CalorieCount.reduce(0, +)
 ### Day 2
 Input is processed to type `[[String]]`.
 
-Models
+**Models**
+
 ```swift
 enum EncryptionLexer {
     static func components(for input: String) -> (String, String)? {
@@ -136,7 +147,8 @@ struct RockPaperScissorsRound {
 }
 ```
 
-Part- 1
+**Part- 1**
+
 ```swift
 let rockPaperScissorsRoundsPart1 = input
     .map(EncryptionLexer.components)
@@ -147,7 +159,8 @@ let finalScorePart1 = rockPaperScissorsRoundsPart1
     .reduce(0, +)
 ```
 
-Part- 2
+**Part- 2**
+
 ```swift
 let rockPaperScissorsRoundsPart2 = input
     .map(EncryptionLexer.components)
@@ -159,8 +172,10 @@ let finalScorePart2 = rockPaperScissorsRoundsPart2
 ```
 
 ### Day 3
+Input is processed to type `[String]`.
+
+**Helpers**
 ```swift
-// MARK: Helpers
 extension String {
     var uniqueCharacters: Set<Character> { Set(Array(self)) }
 }
@@ -182,7 +197,11 @@ extension Array<String>.SubSequence {
     }
 }
 
-// MARK: Models
+let inputElfPairs = input.map { $0.split(separator: ",") }
+```
+
+**Models**
+```swift
 struct RuckSack {
     let compartment1: String
     let compartment2: String
@@ -236,7 +255,8 @@ struct ElfGroup {
 }
 ```
 
-Part- 1
+**Part- 1**
+
 ```swift
 let priorityAggregated = input
     .compactMap(RuckSack.init)
@@ -245,11 +265,79 @@ let priorityAggregated = input
     .reduce(0, +)
 ```
 
-Part- 2
+**Part- 2**
 ```swift
 let groupPriorityAggregated = input
     .chunked(ElfGroup.groupSize)
     .compactMap(ElfGroup.init)
     .compactMap { $0.group.rucksackItemPriority }
     .reduce(0, +)
+```
+
+### Day 4
+Input is processed to type `[String]`.
+
+**Helpers**
+```swift
+/// Custom operator that encapsulates `⊆` (subset), but mirrors the operation on lhs and rhs (i.e. checks if lhs is a subset of rhs **OR** rhs is a subset of lhs)
+infix operator ⊇⊆
+extension ClosedRange {
+    static func ⊇⊆(lhs: Self, rhs: Self) -> Bool {
+        /*:
+         - Reference: [Check if one Range is within another](https://stackoverflow.com/questions/64066681/check-if-one-range-is-within-another)
+         */
+        rhs.clamped(to: lhs) == rhs || lhs.clamped(to: rhs) == lhs
+    }
+}
+
+extension Substring {
+    var asClosedRange: ClosedRange<Int>? {
+        let rangeElements = self.split(separator: "-")
+        guard rangeElements.count == 2,
+              let lowerBoundRaw = rangeElements.first,
+              let lowerBound = Int(lowerBoundRaw),
+              let upperBoundRaw = rangeElements.last,
+              let upperBound = Int(upperBoundRaw) else { return nil }
+        
+        return lowerBound...upperBound
+    }
+}
+```
+
+**Models**
+```swift
+struct JobAssignmentPair {
+    let elf1Sections: ClosedRange<Int>
+    let elf2Sections: ClosedRange<Int>
+    
+    var completeOverlap: Bool { elf1Sections ⊇⊆ elf2Sections }
+    var overlapExists: Bool {
+        elf1Sections.overlaps(elf2Sections)
+    }
+    
+    init?(_ elfPairsRaw: [ClosedRange<Int>]) {
+        guard elfPairsRaw.count == 2,
+              let elf1Sections = elfPairsRaw.first,
+              let elf2Sections = elfPairsRaw.last else { return nil }
+        
+        self.elf1Sections = elf1Sections
+        self.elf2Sections = elf2Sections
+    }
+}
+```
+
+**Part-1**
+```swift
+let jobAssignmentPairs = inputElfPairs
+    .map { $0.compactMap { sections in sections.asClosedRange } }
+    .compactMap(JobAssignmentPair.init)
+
+let assignmentsWithFullyOverlappingRanges = jobAssignmentPairs
+    .filter { $0.completeOverlap }
+```
+
+**Part-2**
+```swift
+let assignmentsWithOverlappingRanges = jobAssignmentPairs
+    .filter { $0.overlapExists }
 ```
