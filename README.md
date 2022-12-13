@@ -507,8 +507,66 @@ crateStackInventory = CraseStackInventory(stacks)
 rearrangementProcedures.forEach { crateStackInventory.moveCrates(using: .crateMover9001, procedure: $0) }
 
 cratesAtTopOfStacks = crateStackInventory.cratesAtTopOfStacks()
+```
 
-print("Crates 📦 at top of stacks: \(cratesAtTopOfStacks)")
+
+
+### Day 6
+
+Input is processed to type `[String]`.
+
+**Constants**
+
+```swift
+let packetMarkerUniqueCharRequirement = 4
+let messageStartUniqueCharRequirement = 14
+```
+
+**Models**
+
+```swift
+class CharStreamProcessor {
+    let input: String
+    let uniqueCharToDetect: Int
+    
+    init(input: String, uniqueCharToDetect: Int) {
+        self.input = input
+        self.uniqueCharToDetect = uniqueCharToDetect
+    }
+    
+    func process() -> (charactersProcessed: String.SubSequence, charBuffer: String.SubSequence) {
+        var charactersProcessed = input.prefix(uniqueCharToDetect - 1)
+        var charBuffer = charactersProcessed
+        
+        for character in input.dropFirst(uniqueCharToDetect - 1) {
+            charactersProcessed.append(character)
+            
+            if !(charBuffer.count < uniqueCharToDetect) {
+                charBuffer.removeFirst()
+            }
+            charBuffer.append(character)
+            
+            let charBufferUniqueElements = Set(charBuffer)
+            guard charBufferUniqueElements.count != uniqueCharToDetect else { break }
+        }
+        
+        return (charactersProcessed, charBuffer)
+    }
+}
+```
+
+**Part-1**
+
+```swift
+var charStreamProcessor = CharStreamProcessor(input: inputString, uniqueCharToDetect: packetMarkerUniqueCharRequirement)
+let (sopCharactersProcessed, _) = charStreamProcessor.process()
+```
+
+**Part-2**
+
+```swift
+charStreamProcessor = CharStreamProcessor(input: inputString, uniqueCharToDetect: messageStartUniqueCharRequirement)
+let (messageCharactersProcessed, _) = charStreamProcessor.process()
 ```
 
 
